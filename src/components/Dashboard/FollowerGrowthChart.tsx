@@ -1,6 +1,15 @@
-
 import { motion } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+import { useMemo } from 'react';
+import { Sparkles } from 'lucide-react';
 
 const followerData = [
   { date: 'Mon', followers: 120 },
@@ -27,6 +36,19 @@ const FollowerGrowthChart = () => {
     return null;
   };
 
+  // 🧠 AI Assistant Insight Logic
+  const aiInsight = useMemo(() => {
+    const diffs = followerData.map((_, i) =>
+      i > 0 ? followerData[i].followers - followerData[i - 1].followers : 0
+    ).slice(1);
+
+    const avgGrowth = diffs.reduce((sum, val) => sum + val, 0) / diffs.length;
+
+    if (avgGrowth > 200) return "🌱 You're experiencing strong follower growth!";
+    if (avgGrowth > 100) return "📈 Growth is steady. Keep up the good content!";
+    return "⚠️ Growth is slowing. Try experimenting with new posts or reels.";
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -34,25 +56,28 @@ const FollowerGrowthChart = () => {
       transition={{ duration: 0.5, delay: 0.2 }}
       className="bg-slate-800/50 backdrop-blur-sm p-6 rounded-xl border border-slate-700"
     >
-      <h3 className="text-xl font-semibold text-white mb-6">Follower Growth</h3>
+      <h3 className="text-xl font-semibold text-white mb-4">Follower Growth</h3>
+
+      {/* AI Assistant Insight */}
+      <div className="flex items-center text-sm text-blue-300 bg-slate-700/50 p-3 rounded-lg border border-slate-600 mb-4">
+        <Sparkles className="w-4 h-4 mr-2 text-blue-400 animate-pulse" />
+        <span>{aiInsight}</span>
+      </div>
+
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={followerData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <LineChart
+            data={followerData}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis 
-              dataKey="date" 
-              stroke="#94a3b8"
-              fontSize={12}
-            />
-            <YAxis 
-              stroke="#94a3b8"
-              fontSize={12}
-            />
+            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+            <YAxis stroke="#94a3b8" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
-            <Line 
-              type="monotone" 
-              dataKey="followers" 
-              stroke="#3b82f6" 
+            <Line
+              type="monotone"
+              dataKey="followers"
+              stroke="#3b82f6"
               strokeWidth={3}
               dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
               activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}

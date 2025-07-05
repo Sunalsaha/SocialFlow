@@ -1,0 +1,104 @@
+// backend/index.js
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
+import { MongoClient, ObjectId } from 'mongodb';
+import fetch from 'node-fetch';
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+
+const client = new MongoClient(MONGO_URI);
+let db;
+
+app.use(cors());
+app.use(express.json());
+
+app.use(async (req, res, next) => {
+  if (!db) {
+    try {
+      await client.connect();
+      db = client.db('social-dashboard');
+    } catch (err) {
+      return res.status(500).json({ error: 'DB connection failed' });
+    }
+  }
+  next();
+});
+
+// Middleware to verify JWT
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: 'Missing token' });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
+};
+
+// POST /api/chat
+app.post('/api/chat', authenticate, async (req, res) => {
+  const { message } = req.body;
+  if (!message || !message.content) return res.status(400).json({ error: 'Invalid message' });
+
+  try {
+    const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: message.content }],
+      }),
+    });
+
+    const data = await openaiRes.json();
+    const reply = data.choices?.[0]?.message?.content || 'No reply';
+
+    await db.collection('chats').insertOne({
+      userId: req.user.id,
+      messages: [
+        { role: 'user', content: message.content },
+        { role: 'assistant', content: reply },
+      ],
+      createdAt: new Date(),
+    });
+
+    res.json({ reply });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'AI request failed' });
+  }
+});
+
+// GET /api/chat/history
+app.get('/api/chat/history', authenticate, async (req, res) => {
+  try {
+    const history = await db
+      .collection('chats')
+      .find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    res.json(history);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load history' });
+  }
+});
+
+app.listen(PORT, () => console.log(`AI Chat backend running on http://localhost:${PORT}`));

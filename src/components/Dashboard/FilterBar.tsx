@@ -15,7 +15,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onPlatformChange,
   onTimeframeChange
 }) => {
-  const platforms = ['All', 'Instagram', 'Twitter', 'Facebook'];
+  const platforms = ['All', 'Instagram', 'YouTube', 'Facebook'];
   const timeframes = ['Last 7 Days', 'Last 30 Days', 'Last 3 Months'];
 
   return (

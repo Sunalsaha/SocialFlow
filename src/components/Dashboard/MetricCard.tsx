@@ -1,31 +1,40 @@
-
-import { motion } from 'framer-motion';
+import { motion, animate } from 'framer-motion';
 import { LucideIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface MetricCardProps {
   title: string;
-  value: string | number;
+  value: number;
   change: number;
   icon: LucideIcon;
   color: string;
   index: number;
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ 
-  title, 
-  value, 
-  change, 
-  icon: Icon, 
+const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  change,
+  icon: Icon,
   color,
-  index 
+  index,
 }) => {
-  const formatValue = (val: string | number) => {
-    if (typeof val === 'number') {
-      if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-      if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
-      return val.toLocaleString();
-    }
-    return val;
+  const [animatedValue, setAnimatedValue] = useState(0);
+
+  useEffect(() => {
+    const controls = animate(0, value, {
+      duration: 1.5,
+      onUpdate(latest) {
+        setAnimatedValue(latest);
+      },
+    });
+    return () => controls.stop();
+  }, [value]);
+
+  const formatValue = (val: number) => {
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+    return val.toLocaleString(undefined, { maximumFractionDigits: 0 });
   };
 
   return (
@@ -40,15 +49,18 @@ const MetricCard: React.FC<MetricCardProps> = ({
         <div className={`p-3 rounded-lg bg-gradient-to-r ${color}`}>
           <Icon className="h-6 w-6 text-white" />
         </div>
-        <div className={`text-sm font-medium ${
-          change >= 0 ? 'text-green-400' : 'text-red-400'
-        }`}>
-          {change >= 0 ? '+' : ''}{change}%
+        <div
+          className={`text-sm font-medium ${
+            change >= 0 ? 'text-green-400' : 'text-red-400'
+          }`}
+        >
+          {change >= 0 ? '+' : ''}
+          {change}%
         </div>
       </div>
       <div>
         <h3 className="text-slate-400 text-sm font-medium mb-1">{title}</h3>
-        <p className="text-2xl font-bold text-white">{formatValue(value)}</p>
+        <p className="text-2xl font-bold text-white">{formatValue(animatedValue)}</p>
       </div>
     </motion.div>
   );
