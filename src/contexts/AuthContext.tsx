@@ -27,21 +27,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
+    console.log('Login attempt:', { email, password });
     setIsLoading(true);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Simple mock validation
-    if (email === 'demo@example.com' && password === 'password') {
-      setIsAuthenticated(true);
-      localStorage.setItem('isAuthenticated', 'true');
-    } else {
-      throw new Error('Invalid credentials');
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simple mock validation
+      if (email === 'demo@example.com' && password === 'password') {
+        console.log('Login successful');
+        setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
+      } else {
+        console.log('Login failed: Invalid credentials');
+        throw new Error('Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const logout = () => {
+    console.log('Logging out');
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
   };
@@ -49,7 +60,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check for existing session on mount
   React.useEffect(() => {
     const stored = localStorage.getItem('isAuthenticated');
+    console.log('Checking stored auth:', stored);
     if (stored === 'true') {
+      console.log('Found existing session, setting authenticated');
       setIsAuthenticated(true);
     }
   }, []);
@@ -60,6 +73,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
   };
+
+  console.log('Auth state:', { isAuthenticated, isLoading });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -15,11 +15,15 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with:', { email, password });
+    
     try {
       await login(email, password);
+      console.log('Login successful, showing toast and navigating');
       toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login failed:', error);
       toast.error('Invalid credentials. Try demo@example.com / password');
     }
   };
