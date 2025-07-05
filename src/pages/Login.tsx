@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,8 +9,17 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    console.log('Login page: checking auth state', { isAuthenticated });
+    if (isAuthenticated) {
+      console.log('User already authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +29,7 @@ const Login = () => {
       await login(email, password);
       console.log('Login successful, showing toast and navigating');
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      // Navigation will happen automatically via useEffect when isAuthenticated becomes true
     } catch (error) {
       console.error('Login failed:', error);
       toast.error('Invalid credentials. Try demo@example.com / password');
